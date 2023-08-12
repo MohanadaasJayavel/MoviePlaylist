@@ -1,15 +1,72 @@
 const apiUrl = "https://api.themoviedb.org/3";
 const apiKey = "04c35731a5ee918f014970082a0088b1";
 
-const userLocalStorageKey = "moviePlaylistAppUser";
-const playlistsLocalStorageKey = "moviePlaylistAppPlaylists";
+document.addEventListener("DOMContentLoaded", () => {
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-let currentUser = null;
-let playlists = [];
+    const email = document.getElementById("modalRegisterUsernameInput").value;
+    const password = document.getElementById(
+      "modalRegisterPasswordInput"
+    ).value;
 
-function isLoggedIn() {
-  return currentUser !== null;
-}
+    try {
+      const response = await fetch("http://localhost:3000/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (data.status == 201) {
+        alert("User Registration Successful");
+      } else if (data.status == 400) {
+        alert("User Already exists");
+      }
+      closeRegisterModal();
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  });
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById("modalLoginUsernameInput").value;
+    const password = document.getElementById("modalLoginPasswordInput").value;
+
+    try {
+      const response = await fetch("http://localhost:3000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (data.status == 200) {
+        localStorage.setItem("sessionToken", data.sessionToken);
+        alert("Login Successful");
+        document.getElementById("Logout").style.visibility = "visible";
+        closeLoginModal();
+      } else if (data.status == 404) {
+        alert("Username not found");
+        closeLoginModal();
+      } else if (data.status == 401) {
+        alert("Invalid Credentials");
+      } else if (data.status == 500) {
+        alert("Authentication failed");
+        closeLoginModal();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  });
+});
 
 function openModal(modalId) {
   document.getElementById(modalId).style.display = "block";
@@ -27,6 +84,43 @@ function closeRegisterModal() {
   closeModal("registerModal");
 }
 
+function openplaylistModal(movie) {
+  openModal("playlistModal");
+  localStorage.setItem("CurrentMovie", movie);
+}
+function closeplaylistModal() {
+  closeModal("playlistModal");
+}
+document
+  .getElementById("registerBtn")
+  .addEventListener("click", openRegisterModal);
+
+document
+  .getElementById("createPlaylistBtn")
+  .addEventListener("click", createplaylist);
+
+document
+  .getElementById("viewPlaylistBtn")
+  .addEventListener("click", ViewPlaylist);
+
+document
+  .getElementById("registerClose")
+  .addEventListener("click", closeRegisterModal);
+
+document
+  .getElementById("playlistClose")
+  .addEventListener("click", closeplaylistModal);
+
+document.getElementById("loginBtn").addEventListener("click", openLoginModal);
+document.getElementById("Logout").addEventListener("click", logout);
+
+document
+  .getElementById("AddtoPlaylist")
+  .addEventListener("click", openplaylistModal);
+document
+  .getElementById("loginClose")
+  .addEventListener("click", closeLoginModal);
+
 function openLoginModal() {
   openModal("loginModal");
 }
@@ -34,172 +128,30 @@ function openLoginModal() {
 function closeLoginModal() {
   closeModal("loginModal");
 }
-
-function openPlaylistModal() {
-  openModal("playlistModal");
-}
-
-function closePlaylistModal() {
-  closeModal("playlistModal");
-}
-
-function openViewPlaylistModal() {
-  openModal("viewPlaylistModal");
-}
-
-function closeViewPlaylistModal() {
+function closeviewmyplaylistModal() {
   closeModal("viewPlaylistModal");
 }
 
-function hashPassword(password) {
-  return password.split("").reverse().join("");
-}
-
-function registerUser() {
-  const username = document.getElementById("modalRegisterUsernameInput").value;
-  const password = document.getElementById("modalRegisterPasswordInput").value;
-
-  if (!username || !password) {
-    alert("Please enter a valid username and password.");
-    return;
-  }
-
-  const existingUser = JSON.parse(localStorage.getItem(userLocalStorageKey));
-  if (existingUser && existingUser.username === username) {
-    alert("User already exists. Please login.");
-    return;
-  }
-
-  const user = { username, password: hashPassword(password) };
-  localStorage.setItem(userLocalStorageKey, JSON.stringify(user));
-
-  alert("User registered successfully. Please login.");
-  closeRegisterModal();
-}
-
-function loginUser() {
-  const username = document.getElementById("modalLoginUsernameInput").value;
-  const password = document.getElementById("modalLoginPasswordInput").value;
-  if (!username || !password) {
-    alert("Please enter a valid username and password.");
-    return;
-  }
-  const user = JSON.parse(localStorage.getItem(userLocalStorageKey));
-  if (
-    !user ||
-    user.username !== username ||
-    user.password !== hashPassword(password)
-  ) {
-    alert("Invalid credentials. Please try again.");
-    return;
-  }
-  currentUser = user;
-  document.getElementById("authSection").style.display = "none";
-  document.getElementById("playlistSection").style.display = "block";
-  loadPlaylists();
-  alert("Login successful.");
-  closeLoginModal();
-}
-
-function createPlaylist() {
-  if (!isLoggedIn()) {
-    alert("Please login first.");
-    return;
-  }
-  openPlaylistModal();
-}
-
-function addMovieToPlaylist(movie) {
-  if (!isLoggedIn()) {
-    alert("Please login first.");
-    return;
-  }
-  openPlaylistModal();
-  document
-    .getElementById("modalCreatePlaylistBtn")
-    .addEventListener("click", () => {
-      const playlistName = document.getElementById(
-        "modalPlaylistNameInput"
-      ).value;
-      const isPrivate = document.getElementById(
-        "modalIsPrivateCheckbox"
-      ).checked;
-      addMovieToSelectedPlaylist(movie, playlistName, isPrivate);
-    });
-
-  document
-    .getElementById("modalCreatePlaylistBtn")
-    .addEventListener("click", () => {
-      const playlistName = document.getElementById(
-        "modalPlaylistNameInput"
-      ).value;
-      const isPrivate = document.getElementById(
-        "modalIsPrivateCheckbox"
-      ).checked;
-      addMovieToSelectedPlaylist(movie, playlistName, isPrivate);
-    });
-}
-
-function addMovieToSelectedPlaylist(movie, playlistName, isPrivate) {
-  if (!isLoggedIn()) {
-    alert("Please login first.");
-    return;
-  }
-
-  if (!playlistName) {
-    alert("Please enter a valid playlist name.");
-    return;
-  }
-
-  let playlist = playlists.find(
-    (p) => p.name === playlistName && p.owner === currentUser.username
-  );
-
-  if (!playlist) {
-    playlist = {
-      name: playlistName,
-      isPrivate,
-      owner: currentUser.username,
-      movies: [],
-    };
-    playlists.push(playlist);
-  }
-
-  if (movie) {
-    playlist.movies.push(movie);
-    alert("Movie added to the playlist successfully.");
-  } else {
-    alert("Playlist created successfully.");
-  }
-
-  savePlaylists();
-  closePlaylistModal();
-  updatePlaylistView();
-}
-
-function loadPlaylists() {
-  const savedPlaylists = JSON.parse(
-    localStorage.getItem(playlistsLocalStorageKey)
-  );
-  if (savedPlaylists) {
-    playlists = savedPlaylists;
-  }
-  updatePlaylistView();
-}
-
-function savePlaylists() {
-  localStorage.setItem(playlistsLocalStorageKey, JSON.stringify(playlists));
+function logout() {
+  localStorage.removeItem("sessionToken");
+  alert("LoggedOut Succefully");
 }
 
 async function searchMovies() {
   const searchInput = document.getElementById("searchInput").value;
-  const url = `${apiUrl}/search/movie?api_key=${apiKey}&query=${searchInput}`;
+  const serverUrl = "http://localhost:3000/search-movies";
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(serverUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ searchInput }),
+    });
+
     const data = await response.json();
     displayMovies(data.results);
-    console.log(data.results);
   } catch (error) {
     console.error("Error fetching movies:", error);
   }
@@ -246,98 +198,140 @@ function createMovieCard(movie) {
   ratings.innerText = movie.vote_average;
 
   if (ratings.innerText < 5) {
-    console.log(ratings.innerText, "worst");
     ratings.classList.add("ratings_alert");
   } else if (ratings.innerText > 9) {
-    console.log(ratings.innerText, "good");
     ratings.classList.add("ratings_good");
   } else {
-    console.log(ratings.innerText, "averag");
     ratings.classList.add("ratings_average");
   }
   const addToPlaylistBtn = document.createElement("button");
   addToPlaylistBtn.innerText = "Add to Playlist";
-  addToPlaylistBtn.addEventListener("click", () => addMovieToPlaylist(movie));
+  addToPlaylistBtn.id = "AddtoPlaylist";
+  addToPlaylistBtn.addEventListener("click", () =>
+    openplaylistModal(movie.title)
+  );
   movieCard.appendChild(addToPlaylistBtn);
-
   return movieCard;
 }
 
-function updatePlaylistView() {
-  const myPlaylistsContainer = document.getElementById("myPlaylists");
-  myPlaylistsContainer.innerHTML = "";
+async function createplaylist(curentmovie) {
+  const playlistName = document.getElementById("modalPlaylistNameInput").value;
+  const isPrivate = document.getElementById("isPrivateCheckbox").checked;
+  const sessionToken = localStorage.getItem("sessionToken");
+  let currentselectedMovie = localStorage.getItem("CurrentMovie");
 
-  playlists.forEach((playlist) => {
-    if (playlist.owner === currentUser.username) {
-      const playlistCard = document.createElement("div");
-      playlistCard.classList.add("playlist-card");
+  try {
+    const response = await fetch("http://localhost:3000/create-playlist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Session-Token": sessionToken,
+      },
+      body: JSON.stringify({
+        playlistName,
+        isPrivate,
+        movies: [currentselectedMovie],
+      }),
+    });
 
-      const playlistName = document.createElement("h2");
-      playlistName.innerText = playlist.name;
-      playlistCard.appendChild(playlistName);
-
-      const playlistDetails = document.createElement("p");
-      playlistDetails.innerText = playlist.isPrivate ? "Private" : "Public";
-      playlistCard.appendChild(playlistDetails);
-
-      const movieList = document.createElement("ul");
-      playlist.movies.forEach((movie) => {
-        const movieItem = document.createElement("li");
-        movieItem.innerText = movie.title;
-        movieList.appendChild(movieItem);
-      });
-      playlistCard.appendChild(movieList);
-
-      myPlaylistsContainer.appendChild(playlistCard);
+    const data = await response.json();
+    if (data.status === 201 || data.status === 200) {
+      alert(data.message);
+      closeplaylistModal();
+    } else if (data.status == 111) {
+      alert(data.message);
+      closeplaylistModal();
+    } else if (data.status == 401) {
+    } else {
+      alert("Please Login to continue");
+      closeplaylistModal();
     }
-  });
+  } catch (error) {
+    console.error("Error adding movie to playlist:", error);
+  }
 }
 
-function showMyPlaylists() {
-  if (!isLoggedIn()) {
-    alert("Please login first.");
-    return;
+async function ViewPlaylist() {
+  try {
+    const sessionToken = localStorage.getItem("sessionToken");
+    if (!sessionToken) {
+      alert("You need to log in to view your playlists.");
+      return;
+    }
+
+    const response = await fetch("http://localhost:3000/view-playlists", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Session-Token": sessionToken,
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.status === 200) {
+      const publicPlaylists = data.playlists.filter(
+        (playlist) => !playlist.isPrivate
+      );
+      const privatePlaylists = data.playlists.filter(
+        (playlist) => playlist.isPrivate
+      );
+
+      displayPlaylists(publicPlaylists, privatePlaylists);
+    } else {
+      alert("Failed to fetch playlists.");
+    }
+  } catch (error) {
+    console.error("Error fetching playlists:", error);
+  }
+}
+
+function displayPlaylists(publicPlaylists, privatePlaylists) {
+  const myPlaylistsDiv = document.getElementById("myPlaylists");
+  myPlaylistsDiv.innerHTML = "";
+
+  if (publicPlaylists.length > 0) {
+    const publicPlaylistDiv = createPlaylistGroup(
+      "Public Playlists",
+      publicPlaylists
+    );
+    myPlaylistsDiv.appendChild(publicPlaylistDiv);
   }
 
-  document.getElementById("authSection").style.display = "none";
-  document.getElementById("playlistSection").style.display = "none";
-  document.getElementById("viewPlaylistModal").style.display = "block";
-  updatePlaylistView();
+  if (privatePlaylists.length > 0) {
+    const privatePlaylistDiv = createPlaylistGroup(
+      "Private Playlists",
+      privatePlaylists
+    );
+    myPlaylistsDiv.appendChild(privatePlaylistDiv);
+  }
+
+  const viewPlaylistModal = document.getElementById("viewPlaylistModal");
+  viewPlaylistModal.style.display = "block";
 }
 
-document
-  .getElementById("registerBtn")
-  .addEventListener("click", openRegisterModal);
-document.getElementById("loginBtn").addEventListener("click", openLoginModal);
-document
-  .getElementById("loginClose")
-  .addEventListener("click", closeLoginModal);
-document
-  .getElementById("registerClose")
-  .addEventListener("click", closeRegisterModal);
-document
-  .getElementById("playlistClose")
-  .addEventListener("click", closePlaylistModal);
-document
-  .getElementById("viewPlaylistClose")
-  .addEventListener("click", closeViewPlaylistModal);
-document
-  .getElementById("createPlaylistBtn")
-  .addEventListener("click", createPlaylist);
-document
-  .getElementById("modalRegisterBtn")
-  .addEventListener("click", registerUser);
-document.getElementById("modalLoginBtn").addEventListener("click", loginUser);
-document
-  .getElementById("modalCreatePlaylistBtn")
-  .addEventListener("click", () => {
-    const playlistName = document.getElementById(
-      "modalPlaylistNameInput"
-    ).value;
-    const isPrivate = document.getElementById("modalIsPrivateCheckbox").checked;
-    addMovieToSelectedPlaylist(null, playlistName, isPrivate);
+function createPlaylistGroup(groupName, playlists) {
+  const groupDiv = document.createElement("div");
+  groupDiv.classList.add("playlist-group");
+  groupDiv.innerHTML = `<h2>${groupName}</h2>`;
+
+  playlists.forEach((playlist) => {
+    const playlistDiv = createPlaylistDiv(playlist);
+    groupDiv.appendChild(playlistDiv);
   });
-document
-  .getElementById("viewPlaylistBtn")
-  .addEventListener("click", showMyPlaylists);
-loadPlaylists();
+
+  return groupDiv;
+}
+
+function createPlaylistDiv(playlist) {
+  const playlistDiv = document.createElement("div");
+  playlistDiv.classList.add("playlist-item");
+  playlistDiv.innerHTML = `
+    <h3>${playlist.name}</h3>
+    <p>URL: <a href="${playlist.url}" target="_blank">${playlist.url}</a></p>
+    <ul>
+      ${playlist.movies.map((movieName) => `<li>${movieName}</li>`).join("")}
+    </ul>
+  `;
+  return playlistDiv;
+}

@@ -3,71 +3,70 @@
   <head>
     <title>Movie Playlist App</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
   </head>
   <body>
     <div class="container">
       <h1>Mohanadaas Jayavel's Movie Playlist App</h1>
-      <div id="authSection">
-        <!-- <button id="registerBtn">Register</button>
-        <button id="loginBtn">Login</button> -->
-      </div>
-      <div id="playlistSection" style="display: none">
-        <input type="text" id="playlistNameInput" placeholder="Playlist Name" />
-        <label for="isPrivateCheckbox">Private Playlist</label>
-        <input type="checkbox" id="isPrivateCheckbox" />
-        <button id="createPlaylistBtn">Create Playlist</button>
-        <button id="viewPlaylistBtn">View My Playlists</button>
-      </div>
+      <div id="authSection"></div>
       <button id="registerBtn">Register</button>
       <button id="loginBtn">Login</button>
       <input type="text" id="searchInput" placeholder="Search movies..." />
       <button onclick="searchMovies()">Search</button>
+      <button type="submit" id="Logout" style="visibility: hidden">
+        Logout
+      </button>
+      <div id="welcomeMessage"></div>
       <div id="moviesList" class="grid-container"></div>
     </div>
 
     <div id="registerModal" class="modal">
-      <div class="modal-content">
-        <span id="registerClose" class="close">&times;</span>
-        <h2>Register</h2>
-        <div class="model_resgister_input">
-          <input
-            type="text"
-            id="modalRegisterUsernameInput"
-            placeholder="Username"
-          />
-          <input
-            type="password"
-            id="modalRegisterPasswordInput"
-            placeholder="Password"
-          />
+      <form id="registerForm">
+        <div class="modal-content">
+          <span id="registerClose" class="close">&times;</span>
+          <h2>Register</h2>
+          <div class="model_resgister_input">
+            <input
+              type="text"
+              id="modalRegisterUsernameInput"
+              placeholder="Username"
+            />
+            <input
+              type="password"
+              id="modalRegisterPasswordInput"
+              placeholder="Password"
+            />
+          </div>
+          <button type="submit" id="modalRegisterBtn">Register</button>
         </div>
-
-        <button id="modalRegisterBtn">Register</button>
-      </div>
+      </form>
     </div>
 
     <div id="loginModal" class="modal">
-      <div class="modal-content">
-        <span id="loginClose" class="close">&times;</span>
-        <h2>Login</h2>
-        <div class="model_input">
-          <input
-            type="text"
-            id="modalLoginUsernameInput"
-            placeholder="Username"
-          />
-          <input
-            type="password"
-            id="modalLoginPasswordInput"
-            placeholder="Password"
-          />
+      <form id="loginForm">
+        <div class="modal-content">
+          <span id="loginClose" class="close" onclick="closeLoginModal()"
+            >&times;</span
+          >
+          <h2>Login</h2>
+          <div class="model_input">
+            <input
+              type="text"
+              id="modalLoginUsernameInput"
+              placeholder="Username"
+            />
+            <input
+              type="password"
+              id="modalLoginPasswordInput"
+              placeholder="Password"
+            />
+          </div>
+          <button type="submit" id="modalLoginBtn">Login</button>
         </div>
-
-        <button id="modalLoginBtn">Login</button>
-      </div>
+      </form>
     </div>
 
-    <div id="playlistModal" class="modal">
+    <div id="playlistModal" class="modal" style="display: none">
       <div class="modal-content">
         <span id="playlistClose" class="close">&times;</span>
         <h2>Create Playlist</h2>
@@ -76,24 +75,27 @@
           id="modalPlaylistNameInput"
           placeholder="Playlist Name"
         />
-        <div class="playlist_selection">
-          <div class="private_palylist">
-            <input type="checkbox" id="modalIsPrivateCheckbox" />
-            <label for="modalIsPrivateCheckbox">Private Playlist</label>
-          </div>
-          <!-- <div class="public_playlist">
-            <input type="checkbox" id="modalIsPublicCheckbox" />
-            <label for="modalIsPublicCheckbox">Public Playlist</label>
-          </div> -->
+        <div id="playlistSection">
+          <label for="isPrivateCheckbox">Private Playlist</label>
+          <input type="checkbox" id="isPrivateCheckbox" />
+          <button id="createPlaylistBtn">Add to Playlist</button>
+          <button id="viewPlaylistBtn">View My Playlists</button>
         </div>
-
-        <button id="modalCreatePlaylistBtn">Create Playlist</button>
       </div>
     </div>
 
-    <div id="viewPlaylistModal" class="modal">
+    <div
+      id="viewPlaylistModal"
+      class="view_palylist_modal"
+      style="display: none"
+    >
       <div class="modal-content">
-        <span id="viewPlaylistClose" class="close">&times;</span>
+        <span
+          id="viewPlaylistClose"
+          class="close"
+          onclick="closeviewmyplaylistModal()"
+          >&times;</span
+        >
         <h2>My Playlists</h2>
         <div id="myPlaylists"></div>
       </div>
